@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model, authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.password_validation import validate_password
+import re
 
 User = get_user_model()
 
@@ -12,6 +13,14 @@ class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['username', 'password', 'confirm_password']
+    
+    def validate_username(self, value):
+        # Regular expression for username validation
+        if not re.match(r'^[A-Za-z]\w{7,29}$', value):
+            raise serializers.ValidationError(
+                "Username must start with an alphabet and can contain alphabets, numbers, or underscores. Length should be 8-30 characters."
+            )
+        return value
     
     def validate_password(self, value):
         
@@ -51,18 +60,7 @@ class PasswordResetRequestSerializer(serializers.Serializer):
             raise serializers.ValidationError("User with this username does not exist.")
         return value
 
-"""class PasswordResetConfirmSerializer(serializers.Serializer):
-    username = serializers.CharField()
-    new_password = serializers.CharField(write_only=True)
 
-    def validate_username(self, value):
-        if not User.objects.filter(username=value).exists():
-            raise serializers.ValidationError("User with this username does not exist.")
-        return value
-
-    def validate_new_password(self, value):
-        serializers.validate_password(value)  
-        return value"""
 
 class PasswordResetConfirmSerializer(serializers.Serializer):
     username = serializers.CharField()
@@ -70,7 +68,14 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 
     def validate_new_password(self, value):
         
-        validate_password(value)
+        if len(value) < 8:
+            raise serializers.ValidationError("Password must be at least 8 characters long.")
+        if not any(char.isupper() for char in value):
+            raise serializers.ValidationError("Password must contain at least one uppercase letter.")
+        if not any(char.isdigit() for char in value):
+            raise serializers.ValidationError("Password must contain at least one number.")
+        
+        #validate_password(value)
         return value
 
     def save(self):
