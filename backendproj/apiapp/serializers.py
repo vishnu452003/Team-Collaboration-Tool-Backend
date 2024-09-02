@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model, authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.password_validation import validate_password
 import re
+from .models import Workspace, Project
 
 User = get_user_model()
 
@@ -89,3 +90,17 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
             user.save()
         except User.DoesNotExist:
             raise serializers.ValidationError("User does not exist")
+
+class WorkspaceSerializer(serializers.ModelSerializer):
+    owner = serializers.ReadOnlyField(source='owner.username')
+    
+    class Meta:
+        model = Workspace
+        fields = ['id', 'name', 'description', 'owner', 'members', 'created_at', 'updated_at']
+
+class ProjectSerializer(serializers.ModelSerializer):
+    workspace = serializers.ReadOnlyField(source='workspace.name')
+
+    class Meta:
+        model = Project
+        fields = ['id', 'name', 'description', 'workspace', 'created_at', 'updated_at']

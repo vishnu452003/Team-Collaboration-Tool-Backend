@@ -7,6 +7,10 @@ from django.contrib.auth import authenticate
 from .serializers import RegisterSerializer, LoginSerializer,PasswordResetRequestSerializer, PasswordResetConfirmSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from drf_yasg.utils import swagger_auto_schema
+from rest_framework import viewsets, permissions
+from rest_framework.decorators import action
+from .models import Workspace, Project
+from .serializers import WorkspaceSerializer, ProjectSerializer
 
 User = get_user_model()
 class RegisterView(APIView):
@@ -80,4 +84,46 @@ class PasswordResetConfirmView(APIView):
             return Response({"message": "Password reset successfully"}, status=status.HTTP_200_OK)
         except User.DoesNotExist:
             raise NotFound("User not found")
+
+
+class WorkspaceViewSet(viewsets.ModelViewSet):
+    serializer_class = WorkspaceSerializer
+    queryset = Workspace.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+    
+    @action(detail=True, methods=['post'])
+    def add_member(self, request, pk=None):
+
+        workspace = self.get_object()
+        user_ids = request.data.get('user_ids', [])  # Assume `user_ids` is a list of user IDs provided in the request
+
+        for user_id in user_ids:
+
+            try:
+
+                user = User.objects.get(id=user_id)
+                workspace.members.add(user)
+            except User.DoesNotExist:
+
+                return Response({'status': f'User with ID {user_id} does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+
+        workspace.save()
+        return Response({'status': 'members added'})
+
+    
+
+    
+
+
+class ProjectViewSet(viewsets.ModelViewSet):
+    serializer_class = ProjectSerializer
+    queryset = Project.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        workspace = Workspace.objects.get(id=self.request.data['workspace_id'])
+        serializer.save(workspace=workspace)
     
