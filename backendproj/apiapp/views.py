@@ -89,7 +89,7 @@ class PasswordResetConfirmView(APIView):
 class WorkspaceViewSet(viewsets.ModelViewSet):
     serializer_class = WorkspaceSerializer
     queryset = Workspace.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
+    
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
@@ -98,17 +98,17 @@ class WorkspaceViewSet(viewsets.ModelViewSet):
     def add_member(self, request, pk=None):
 
         workspace = self.get_object()
-        user_ids = request.data.get('user_ids', [])  # Assume `user_ids` is a list of user IDs provided in the request
+        usernames = request.data.get('usernames', [])  # Assume `usernames` is a list of user names provided in the request
 
-        for user_id in user_ids:
+        for username in usernames:
 
             try:
 
-                user = User.objects.get(id=user_id)
+                user = User.objects.get(username=username)
                 workspace.members.add(user)
             except User.DoesNotExist:
 
-                return Response({'status': f'User with ID {user_id} does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'status': f'User with ID {username} does not exist'}, status=status.HTTP_400_BAD_REQUEST)
 
         workspace.save()
         return Response({'status': 'members added'})
@@ -121,7 +121,7 @@ class WorkspaceViewSet(viewsets.ModelViewSet):
 class ProjectViewSet(viewsets.ModelViewSet):
     serializer_class = ProjectSerializer
     queryset = Project.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
+   
 
     def perform_create(self, serializer):
         workspace = Workspace.objects.get(id=self.request.data['workspace_id'])
