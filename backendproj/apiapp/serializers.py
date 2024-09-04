@@ -4,6 +4,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.password_validation import validate_password
 import re
 from .models import Workspace, Project
+from django.conf import settings
 
 User = get_user_model()
 
@@ -93,6 +94,8 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 
 class WorkspaceSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source='owner.username')
+    members = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), many=True, required=False)
+
     
     class Meta:
         model = Workspace
