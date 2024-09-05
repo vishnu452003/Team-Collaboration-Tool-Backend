@@ -127,3 +127,22 @@ class ProjectViewSet(viewsets.ModelViewSet):
         workspace = Workspace.objects.get(id=self.request.data['workspace_id'])
         serializer.save(workspace=workspace)
     
+    def get_queryset(self):
+        workspace_id = self.request.query_params.get('workspace_id')
+        if workspace_id:
+            return self.queryset.filter(workspace__id=workspace_id)
+        return self.queryset
+    
+    def update(self, request, *args, **kwargs):
+        project = self.get_object()
+        project.name = request.data.get('name', project.name)
+        project.description = request.data.get('description', project.description)
+        project.save()
+        serializer = ProjectSerializer(project)
+        return Response(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        project = self.get_object()
+        project.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
