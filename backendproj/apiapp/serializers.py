@@ -94,8 +94,8 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 
 class WorkspaceSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source='owner.username')
-    members = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), many=True, required=False)
-
+    members = serializers.SlugRelatedField(slug_field='username', queryset=User.objects.all(), many=True, required=False)
+    
     
     class Meta:
         model = Workspace
