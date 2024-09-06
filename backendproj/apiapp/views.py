@@ -89,6 +89,10 @@ class PasswordResetConfirmView(APIView):
 class WorkspaceViewSet(viewsets.ModelViewSet):
     serializer_class = WorkspaceSerializer
     queryset = Workspace.objects.all()
+
+    def get_queryset(self):
+        # Return workspaces where the logged-in user is the owner
+        return Workspace.objects.filter(owner=self.request.user)
     
 
     def perform_create(self, serializer):
